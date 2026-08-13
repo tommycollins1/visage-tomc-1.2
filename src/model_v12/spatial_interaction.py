@@ -1,18 +1,19 @@
 import numpy as np
 import pandas as pd
 
-
-def bng_distance(E1, N1, E2, N2):
-    """Euclidean distance in British National Grid (metres)."""
-    return np.sqrt((E1 - E2) ** 2 + (N1 - N2) ** 2)
+from src.model.distance import bng_distance
 
 
 def model_2(origins_df: pd.DataFrame,
             destinations_df: pd.DataFrame,
             visits_per_person: float,
-            lambda_m: float) -> pd.DataFrame:
+            lambda_value: float) -> pd.DataFrame:
     """
     Baseline distance-only spatial interaction model (M2).
+
+    Uses the same decay convention as src.behaviour.distance_decay and
+    src.model.quality_attractor: weight = exp(-lambda_value * distance),
+    with lambda_value expressed per metre (NOT a metre length-scale).
 
     Parameters
     ----------
@@ -22,8 +23,8 @@ def model_2(origins_df: pd.DataFrame,
         Must contain columns: site_id, E, N.
     visits_per_person : float
         Annual visits per person (placeholder).
-    lambda_m : float
-        Distance-decay parameter in metres.
+    lambda_value : float
+        Distance-decay rate, per metre. weight = exp(-lambda_value * distance).
 
     Returns
     -------
@@ -46,7 +47,7 @@ def model_2(origins_df: pd.DataFrame,
     df["distance"] = bng_distance(df["E_o"], df["N_o"], df["E_d"], df["N_d"])
 
     # Exponential decay weight
-    df["weight"] = np.exp(-df["distance"] / lambda_m)
+    df["weight"] = np.exp(-df["distance"] * lambda_value)
 
     # Sum of weights per origin (for normalisation)
     weight_sums = df.groupby("origin_id")["weight"].sum().rename("weight_sum")

@@ -1,13 +1,10 @@
-from pathlib import Path
-
-import pandas as pd
-import geopandas as gpd
-import numpy as np
-
+from paths_cfg import ARCHIVED_SYNTHETIC_ORIGINS, ARCHIVED_SITE_CATALOGUE_WITH_QUALITY
+from params_cfg import BETA_QUALITY
 from src.data.load_origins import load_origins
 from src.data.load_destinations import load_destinations
 from src.behaviour.distance_decay import LAMBDA_PANS
 from src.model.quality_attractor import run_quality_sensitive_gravity
+from src.model.distance import build_distance_matrix
 from src.visualisation.ranking_comparisons import (
     build_ranking_comparison,
     plot_top_n_rank_change,
@@ -17,11 +14,13 @@ from src.visualisation.ranking_comparisons import (
 # ---------------------------------------------------------
 # 1. PATHS
 # ---------------------------------------------------------
+# NOTE: using the archived v1.1-format data here, not the new
+# site_cat_access_union.csv - the new file doesn't have QualityScore
+# yet and isn't deduplicated to one row per site. Swap these once the new
+# boolean-column destinations file + quality scores are ready.
 
-DATA_DIR = Path("data") / "raw"
-
-ORIGINS_PATH = DATA_DIR / "synthetic_pop(in).csv"
-DESTINATIONS_PATH = DATA_DIR / "site_catalogue_with_quality.csv"
+ORIGINS_PATH = ARCHIVED_SYNTHETIC_ORIGINS
+DESTINATIONS_PATH = ARCHIVED_SITE_CATALOGUE_WITH_QUALITY
 
 
 # ---------------------------------------------------------
@@ -40,14 +39,7 @@ if "QualityScore" not in destinations_gdf.columns:
 # 3. BUILD DISTANCE MATRIX
 # ---------------------------------------------------------
 
-orig_xy = np.vstack([origins_gdf.geometry.x, origins_gdf.geometry.y]).T
-dest_xy = np.vstack([destinations_gdf.geometry.x, destinations_gdf.geometry.y]).T
-
-dist_matrix = pd.DataFrame(
-    np.sqrt(((orig_xy[:, None, :] - dest_xy[None, :, :]) ** 2).sum(axis=2)),
-    index=origins_gdf["origin_id"],
-    columns=destinations_gdf["site_id"],
-)
+dist_matrix = build_distance_matrix(origins_gdf, destinations_gdf)
 
 
 # ---------------------------------------------------------
@@ -72,7 +64,7 @@ quality_df = run_quality_sensitive_gravity(
     destinations_df=destinations_gdf.drop(columns="geometry"),
     dist_matrix=dist_matrix,
     lambda_value=LAMBDA_PANS,
-    beta=1.0,  # quality sensitivity
+    beta=BETA_QUALITY,
 )
 
 

@@ -7,9 +7,10 @@ This module:
 - Recomputes the origin × destination distance matrix
 """
 
-import numpy as np
 import pandas as pd
 import geopandas as gpd
+
+from src.model.distance import build_distance_matrix
 
 
 def add_new_origin(origins_gdf, origin_id, easting, northing, population):
@@ -37,14 +38,4 @@ def compute_extended_distance_matrix(origins_gdf, destinations_gdf):
     """
     Compute full origin × destination Euclidean distance matrix.
     """
-
-    orig_xy = np.vstack([origins_gdf.geometry.x, origins_gdf.geometry.y]).T
-    dest_xy = np.vstack([destinations_gdf.geometry.x, destinations_gdf.geometry.y]).T
-
-    dist_matrix = pd.DataFrame(
-        np.sqrt(((orig_xy[:, None, :] - dest_xy[None, :, :]) ** 2).sum(axis=2)),
-        index=origins_gdf["origin_id"],
-        columns=destinations_gdf["site_id"],
-    )
-
-    return dist_matrix
+    return build_distance_matrix(origins_gdf, destinations_gdf)

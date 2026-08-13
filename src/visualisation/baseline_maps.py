@@ -9,6 +9,7 @@ def plot_greenspace_visits_osm(
     model_df: pd.DataFrame,
     destinations_gdf: gpd.GeoDataFrame,
     title: str = "Oxford Greenspace Visit Volume",
+    id_col: str = "site_id",
 ):
     """
     Plot baseline greenspace visit volumes over an OSM basemap.
@@ -16,23 +17,23 @@ def plot_greenspace_visits_osm(
 
     # 1. Aggregate visits
     site_visits = (
-        model_df.groupby("site_id")["visits"]
+        model_df.groupby(id_col)["visits"]
         .sum()
         .reset_index()
     )
 
     # 2. Merge with geometries
-    gdf = destinations_gdf.merge(site_visits, on="site_id", how="left")
+    gdf = destinations_gdf.merge(site_visits, on=id_col, how="left")
 
     # 3. Reproject to Web Mercator
     gdf = gdf.to_crs(epsg=3857)
 
     # 4. Centroids for proportional symbols
     gdf_points = gdf.copy()
-    gdf_points["geometry"] = gdf_points.geometry.centroid
+    # gdf_points["geometry"] = gdf_points.geometry.centroid
 
     # 5. Strong symbol scaling + minimum size
-    gdf_points["size"] = np.maximum(np.sqrt(gdf_points["visits"]) * 4.0, 25)
+    gdf_points["size"] = np.maximum(np.sqrt(gdf_points["visits"]) / 4, 25)
 
     # 6. Six stepped colour bins using Plasma
     bins = pd.qcut(
@@ -81,7 +82,7 @@ def plot_greenspace_visits_osm(
     # Basemap
     ctx.add_basemap(
         ax,
-        source=ctx.providers.OpenStreetMap.Mapnik,
+        source=ctx.providers.CartoDB.Positron,
         zoom=13,
         alpha=0.8,
     )
@@ -101,7 +102,7 @@ def plot_greenspace_visits_osm(
         subset = gdf_points[gdf_points["visit_bin"] == label]
         subset.plot(
             ax=ax,
-            markersize=subset["size"],
+            # markersize=subset["size"],
             color=colour,
             alpha=0.85,
             edgecolor="white",
@@ -112,7 +113,7 @@ def plot_greenspace_visits_osm(
     offsets = [(20, 20), (-20, 20), (20, -20), (-20, -20), (28, 0)]
     for (idx, row), (dx, dy) in zip(top5.iterrows(), offsets):
         ax.annotate(
-            str(row["site_id"]),
+            str(row[id_col]),
             xy=(row.geometry.x, row.geometry.y),
             xytext=(dx, dy),
             textcoords="offset points",

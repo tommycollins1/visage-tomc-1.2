@@ -11,8 +11,6 @@ This script:
 - Produces the triptych visualisation
 """
 
-from pathlib import Path
-import numpy as np
 import pandas as pd
 import geopandas as gpd
 
@@ -20,37 +18,46 @@ import geopandas as gpd
 # IMPORT MODULES
 # ------------------------------
 
+from paths_cfg import ARCHIVED_SYNTHETIC_ORIGINS, ARCHIVED_SITE_CATALOGUE_WITH_QUALITY
+from params_cfg import (
+    OXFORD_NORTH_ID,
+    OXFORD_NORTH_EASTING,
+    OXFORD_NORTH_NORTHING,
+    OXFORD_NORTH_POPULATION,
+)
+
 from src.data.load_origins import load_origins
 from src.data.load_destinations import load_destinations
+from src.model.distance import build_distance_matrix
 
 from src.behaviour.distance_decay import (
     LAMBDA_PANS,
     run_gravity_with_pans_lambda,
+    run_gravity_with_lambda,
 )
 
 from src.model.quality_attractor import run_quality_sensitive_gravity
 
-from src.scenarios.add_origin import (
+from src.scenario.add_origin import (
     add_new_origin,
     compute_extended_distance_matrix,
 )
 
-from src.scenarios.run_scenario import (
+from src.scenario.run_scenario import (
     compute_scenario_visits,
     compute_impact,
 )
 
-from src.visualisation.scenario_triptych import plot_triptych
+from src.visualisation.scenario_tryptych import plot_triptych
 
 
 # ------------------------------
 # 1. PATHS
 # ------------------------------
+# NOTE: using the archived v1.1-format data here (see run_quality.py for why)
 
-DATA_DIR = Path("data") / "raw"
-
-ORIGINS_PATH = DATA_DIR / "synthetic_pop(in).csv"
-DESTINATIONS_PATH = DATA_DIR / "site_catalogue_with_quality.csv"
+ORIGINS_PATH = ARCHIVED_SYNTHETIC_ORIGINS
+DESTINATIONS_PATH = ARCHIVED_SITE_CATALOGUE_WITH_QUALITY
 
 
 # ------------------------------
@@ -65,17 +72,12 @@ destinations_gdf = load_destinations(str(DESTINATIONS_PATH))
 # 3. ADD OXFORD NORTH
 # ------------------------------
 
-OXFORD_NORTH_ID = "OXFORD_NORTH"
-OXFORD_NORTH_E = 451900
-OXFORD_NORTH_N = 208000
-OXFORD_NORTH_POP = 4000
-
 origins_extended = add_new_origin(
     origins_gdf,
     origin_id=OXFORD_NORTH_ID,
-    easting=OXFORD_NORTH_E,
-    northing=OXFORD_NORTH_N,
-    population=OXFORD_NORTH_POP,
+    easting=OXFORD_NORTH_EASTING,
+    northing=OXFORD_NORTH_NORTHING,
+    population=OXFORD_NORTH_POPULATION,
 )
 
 
@@ -96,15 +98,7 @@ dist_matrix_extended = compute_extended_distance_matrix(
 baseline_df = run_gravity_with_pans_lambda(
     origins_gdf.drop(columns="geometry"),
     destinations_gdf.drop(columns="geometry"),
-    pd.DataFrame(
-        np.sqrt(
-            ((np.vstack([origins_gdf.geometry.x, origins_gdf.geometry.y]).T[:, None, :]
-              - np.vstack([destinations_gdf.geometry.x, destinations_gdf.geometry.y]).T[None, :, :]) ** 2
-            ).sum(axis=2)
-        ),
-        index=origins_gdf["origin_id"],
-        columns=destinations_gdf["site_id"],
-    )
+    build_distance_matrix(origins_gdf, destinations_gdf),
 )
 
 baseline_visits = (
@@ -123,7 +117,11 @@ scenario_df, scenario_visits = compute_scenario_visits(
     origins_df=origins_extended.drop(columns="geometry"),
     destinations_df=destinations_gdf.drop(columns="geometry"),
     dist_matrix=dist_matrix_extended,
-    gravity_function=run_gravity_with_pans_lambda,
+    # compute_scenario_visits always passes lambda_value as a keyword, so the
+    # gravity function must accept it - run_gravity_with_pans_lambda doesn't
+    # (it hard-codes LAMBDA_PANS internally). Use run_gravity_with_lambda
+    # instead, passing LAMBDA_PANS explicitly: numerically identical result.
+    gravity_function=run_gravity_with_lambda,
     lambda_value=LAMBDA_PANS,
 )
 
@@ -189,7 +187,7 @@ colour_map = {
 plot_triptych(
     trip_df=trip,
     flows_gdf=flows_gdf,
-    on_x=OXFORD_NORTH_E,
-    on_y=OXFORD_NORTH_N,
+    on_x=OXFORD_NORTH_EASTING,
+    on_y=OXFORD_NORTH_NORTHING,
     colour_map=colour_map,
 )
