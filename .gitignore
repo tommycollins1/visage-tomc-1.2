@@ -1,3 +1,8 @@
+# Restricted / licensed data - do not commit (Strava data redistribution is
+# restricted by Strava's terms; purged from history 2026-08-12, see CHANGELOG)
+data/external/agg_strava_oxford_greenspace_timeseries.parquet
+**/agg_strava_oxford_greenspace_timeseries.parquet
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
