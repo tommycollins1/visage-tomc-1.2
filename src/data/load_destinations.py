@@ -2,14 +2,9 @@ import pandas as pd
 import geopandas as gpd
 
 
-def load_destinations(path: str) -> gpd.GeoDataFrame:
+def load_destinations(path) -> gpd.GeoDataFrame:
     """
     Load and prepare destination data (greenspace catalogue).
-
-    Parameters
-    ----------
-    path : str
-        Path to the destination CSV file.
 
     Returns
     -------
