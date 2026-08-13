@@ -1,16 +1,13 @@
+
+
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 
 
-def load_origins(path: str) -> gpd.GeoDataFrame:
+def load_origins(path) -> gpd.GeoDataFrame:
     """
     Load and prepare origin data (synthetic population).
-
-    Parameters
-    ----------
-    path : str
-        Path to the origin CSV file.
 
     Returns
     -------
