@@ -32,16 +32,10 @@ LAMBDA_PANS = -_model.coef_[0]
 # Behaviourally realistic visit frequency
 VISITS_PER_PERSON_PER_YEAR = 100
 
-# Oxford population (2021 Census)
-OXFORD_POP_2021 = 162_100
-
-# Total annual demand
-TOTAL_DEMAND = OXFORD_POP_2021 * VISITS_PER_PERSON_PER_YEAR
-
-
 # ---------------------------------------------------------
 # 2. Gravity model using calibrated λ
 # ---------------------------------------------------------
+
 
 def run_gravity_with_pans_lambda(origins_df, sites_df, dist_matrix):
     """
