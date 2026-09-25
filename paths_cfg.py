@@ -27,6 +27,11 @@ DATA: Final[Path] = ROOT / "data"
 REPORTS: Final[Path] = ROOT / "reports"
 NOTEBOOKS: Final[Path] = ROOT / "notebooks"
 
+# contextily basemap tile cache - reused across runs so repeated dev
+# iteration doesn't keep re-fetching the same tiles from the map provider
+# (contributed to hitting rate limits/blocks - see CHANGELOG 2026-08-26).
+TILE_CACHE: Final[Path] = ROOT / ".tile_cache"
+
 # Data subfolders. See data/_archive - superseded v1.1-era files kept for
 # reference (not deleted, just not part of the active pipeline).
 DATA_ARCHIVE: Final[Path] = DATA / "_archive"
@@ -48,6 +53,9 @@ SYNTHETIC_ORIGINS: Final[Path] = DATA / "ox_synthetic_pop_origin.csv"
 # at distance-matrix build time, not by deleting rows here.
 GREENSPACE_DESTINATIONS: Final[Path] = DATA / "site_cat_access_union.csv"
 
+GREENSPACE_POLYGONS_OX: Final[Path] = DATA / 'ox_greenspace_union.gpkg'
+GREENSPACE_POLYGONS_ALL: Final[Path] = DATA / 'all_greenspace_union.gpkg'
+
 # =============================================================================
 # ARCHIVED (superseded v1.1-format) INPUTS
 # -----------------------------------------------------------------------------
@@ -68,7 +76,14 @@ ARCHIVED_SITE_CATALOGUE_POLYGONS: Final[Path] = DATA_ARCHIVE / "site_catalogue_p
 
 ORVAL_JOIN: Final[Path] = DATA_EXTERNAL / "join_orval.gpkg"
 OVERTURE_JOIN: Final[Path] = DATA_EXTERNAL / "join_with_oxford.gpkg"
-STRAVA_TIMESERIES: Final[Path] = DATA_EXTERNAL / "agg_strava_oxford_greenspace_timeseries.parquet"
+STRAVA_TIMESERIES: Final[Path] = (
+        DATA_EXTERNAL /
+        "agg_strava_oxford_greenspace_timeseries.parquet"
+)
+CBQ_TIMESERIES: Final[Path] = (
+        DATA_EXTERNAL /
+        "cbq_oxford_greenspace_q1_2025_dayonly_cleaned.gpkg"
+)
 
 # =============================================================================
 # BOUNDARIES
