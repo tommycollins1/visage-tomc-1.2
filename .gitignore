@@ -3,6 +3,14 @@
 data/external/agg_strava_oxford_greenspace_timeseries.parquet
 **/agg_strava_oxford_greenspace_timeseries.parquet
 
+# Restricted / licensed data - do not commit (Cuebiq data redistribution is
+# restricted by Cuebiq's terms)
+/data/external/cbq_oxford_greenspace_q1_2025_dayonly_cleaned.gpkg
+**/cbq_oxford_greenspace_q1_2025_dayonly_cleaned.gpkg
+
+# contextily basemap tile cache - locally cached downloads, not source data
+.tile_cache/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
