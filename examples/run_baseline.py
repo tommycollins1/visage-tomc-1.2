@@ -6,14 +6,13 @@ from paths_cfg import (
     GREENSPACE_POLYGONS_OX
 )
 from params_cfg import (
-    VISITS_PER_PERSON,
-    BASELINE_LAMBDA_VALUE
+    VISITS_PER_PERSON_PER_YEAR,
+    LAMBDA_PANS,
 )
 from src.data.load_origins import load_origins
 from src.data.load_destinations import load_destinations
 from src.model.spatial_interaction import model_2
 from src.visualisation.baseline_maps import plot_greenspace_visits_osm
-dfhn
 
 
 def main():
@@ -25,8 +24,8 @@ def main():
     m2 = model_2(
         origins_df=origins_gdf.drop(columns="geometry"),
         destinations_df=destinations_gdf.drop(columns="geometry"),
-        visits_per_person=VISITS_PER_PERSON,
-        lambda_value=BASELINE_LAMBDA_VALUE,
+        visits_per_person=VISITS_PER_PERSON_PER_YEAR,
+        lambda_value=LAMBDA_PANS,
     )
 
     plot_greenspace_visits_osm(
