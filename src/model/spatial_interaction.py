@@ -15,12 +15,17 @@ def model_2(origins_df: pd.DataFrame,
     src.model.quality_attractor: weight = exp(-lambda_value * distance),
     with lambda_value expressed per metre (NOT a metre length-scale).
 
+    Destinations are access-point-level (multiple access points per site_id)
+    but a site's distance from an origin is reduced to the distance to its
+    NEAREST access point before weighting/allocation, so sites don't compete
+    in proportion to how many access points they happen to have.
+
     Parameters
     ----------
     origins_df : pd.DataFrame
         Must contain columns: origin_id, E, N, population.
     destinations_df : pd.DataFrame
-        Must contain columns: access_pt_id, E, N.
+        Must contain columns: access_pt_id, site_id, E, N.
     visits_per_person : float
         Annual visits per person (placeholder).
     lambda_value : float
@@ -29,7 +34,7 @@ def model_2(origins_df: pd.DataFrame,
     Returns
     -------
     pd.DataFrame
-        Long-format OD table with columns: origin_id, access_pt_id, visits.
+        Long-format OD table with columns: origin_id, site_id, visits.
     """
     origins = origins_df.copy()
     destinations = destinations_df.copy()
@@ -46,6 +51,16 @@ def model_2(origins_df: pd.DataFrame,
     # Compute Euclidean distance
     df["distance"] = bng_distance(df["E_o"], df["N_o"], df["E_d"], df["N_d"])
 
+    # --- collapse access points down to one distance per site ---
+    # A site's distance from an origin is the distance to its NEAREST
+    # access point, not every access point competing as its own destination.
+    df = (
+        df.groupby(["origin_id", "site_id"], as_index=False)["distance"]
+          .min()
+          .merge(origins[["origin_id", "total_visits"]], on="origin_id")
+    )
+    # --- end ---
+
     # Exponential decay weight
     df["weight"] = np.exp(-df["distance"] * lambda_value)
 
@@ -56,4 +71,4 @@ def model_2(origins_df: pd.DataFrame,
     # Allocate visits proportionally to weight
     df["visits"] = df["total_visits"] * (df["weight"] / df["weight_sum"])
 
-    return df[["origin_id", "access_pt_id", "visits"]]
+    return df[["origin_id", "site_id", "visits"]]
