@@ -27,14 +27,18 @@ from typing import Final
 # =============================================================================
 # BASELINE MODEL (model_2 / distance-only)
 # =============================================================================
+# Distance-decay lambda and visit frequency are calibrated from the PaNS
+# survey (see src/behaviour/distance_decay.py for the regression fit) and
+# re-exported here so every example script can pull all tuning parameters
+# from this one file, per the module docstring above. Do not redefine a
+# separate placeholder lambda/visits-per-person here - the Sept 2026 baseline
+# lambda bug (1500m placeholder vs PaNS-calibrated ~7740m) came from exactly
+# that: two names for the same concept living in two files.
 
-VISITS_PER_PERSON: Final[float] = 50  # placeholder, annual visits per person
-
-# model_2's old placeholder decay length-scale was 1500m (1.5km), expressed
-# as exp(-distance / decay_length_m). Converted here to the codebase-standard
-# rate convention: exp(-lambda_value * distance).
-BASELINE_DECAY_LENGTH_M: Final[float] = 1500
-BASELINE_LAMBDA_VALUE: Final[float] = 1 / BASELINE_DECAY_LENGTH_M
+from src.behaviour.distance_decay import (  # noqa: F401
+    LAMBDA_PANS,
+    VISITS_PER_PERSON_PER_YEAR,
+)
 
 # =============================================================================
 # QUALITY-SENSITIVE MODEL
