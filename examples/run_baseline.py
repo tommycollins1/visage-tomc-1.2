@@ -1,16 +1,26 @@
-from paths_cfg import SYNTHETIC_ORIGINS, GREENSPACE_DESTINATIONS
-from params_cfg import VISITS_PER_PERSON, BASELINE_LAMBDA_VALUE
+import geopandas as gpd
+
+from paths_cfg import (
+    SYNTHETIC_ORIGINS,
+    GREENSPACE_DESTINATIONS,
+    GREENSPACE_POLYGONS_OX
+)
+from params_cfg import (
+    VISITS_PER_PERSON,
+    BASELINE_LAMBDA_VALUE
+)
 from src.data.load_origins import load_origins
 from src.data.load_destinations import load_destinations
 from src.model.spatial_interaction import model_2
 from src.visualisation.baseline_maps import plot_greenspace_visits_osm
+dfhn
 
 
 def main():
     origins_gdf = load_origins(path=SYNTHETIC_ORIGINS)
     destinations_gdf = load_destinations(path=GREENSPACE_DESTINATIONS)
-
-    destinations_gdf = destinations_gdf[destinations_gdf.dataset == 'sssi']
+    polygons = (gpd.read_file(GREENSPACE_POLYGONS_OX)
+                .rename(columns={'polygon_id': "site_id"}))
 
     m2 = model_2(
         origins_df=origins_gdf.drop(columns="geometry"),
@@ -21,12 +31,11 @@ def main():
 
     plot_greenspace_visits_osm(
         model_df=m2,
-        destinations_gdf=destinations_gdf,
+        polygons_gdf=polygons,
         title="Oxford Greenspace Visit Volume (Baseline, distance-only)",
-        id_col="access_pt_id",
+        id_col="site_id",
     )
 
 
 if __name__ == "__main__":
-    breakpoint()
     main()
