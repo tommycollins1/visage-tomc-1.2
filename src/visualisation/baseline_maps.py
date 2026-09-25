@@ -4,33 +4,70 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import contextily as ctx
 
+from paths_cfg import TILE_CACHE
+
+# Cache fetched basemap tiles locally so repeated runs during development
+# don't keep re-requesting the same tiles - this, combined with the much
+# wider (~40km) extent since the edge-effect buffer work, was tripping
+# rate-limiting/blocking on both OpenStreetMap's and CartoDB's tile servers.
+TILE_CACHE.mkdir(parents=True, exist_ok=True)
+ctx.set_cache_dir(str(TILE_CACHE))
+
 
 def plot_greenspace_visits_osm(
     model_df: pd.DataFrame,
-    destinations_gdf: gpd.GeoDataFrame,
+    polygons_gdf: gpd.GeoDataFrame,
     title: str = "Oxford Greenspace Visit Volume",
     id_col: str = "site_id",
 ):
     """
     Plot baseline greenspace visit volumes over an OSM basemap.
+
+    Site polygons are drawn as a neutral context layer (no visits encoding -
+    colouring the polygon itself by visits would conflate a site's physical
+    size with how much it's actually visited). The visits signal (colour +
+    size) is drawn as a proportional symbol at each polygon's TRUE centroid.
+
+    This replaces the old approach of plotting one arbitrary access point
+    per site (destinations_gdf.drop_duplicates(subset=id_col, keep="first"))
+    - that picked whichever access point happened to be first in the file,
+    which is why sites could previously plot off to one edge instead of
+    their actual centre. destinations_gdf/access points are no longer
+    needed here now that real site geometry is available.
     """
 
-    # 1. Aggregate visits
+    # 1. Aggregate visits to site level
     site_visits = (
         model_df.groupby(id_col)["visits"]
         .sum()
         .reset_index()
     )
 
-    # 2. Merge with geometries
-    gdf = destinations_gdf.merge(site_visits, on=id_col, how="left")
+    # 2. Join onto polygon geometry - LEFT join, not inner, so a mismatched
+    #    id doesn't silently vanish from the map. Report anything that
+    #    doesn't match: the polygon file's id column may not line up
+    #    cleanly with the model's site_ids.
+    polygons_gdf = polygons_gdf.copy()
+    polygons_gdf[id_col] = polygons_gdf[id_col].astype(str)
+    site_visits[id_col] = site_visits[id_col].astype(str)
 
-    # 3. Reproject to Web Mercator
+    gdf = polygons_gdf.merge(site_visits, on=id_col, how="left")
+    n_matched = gdf["visits"].notna().sum()
+    n_total = len(site_visits)
+    if n_matched < n_total:
+        missing = sorted(set(site_visits[id_col]) - set(polygons_gdf[id_col]))
+        print(
+            f"WARNING: only {n_matched}/{n_total} modelled sites matched a "
+            f"polygon ({len(missing)} unmatched) - e.g. {missing[:5]}"
+        )
+    gdf = gdf[gdf["visits"].notna()].copy()
+
+    # 3. Reproject to Web Mercator for the basemap
     gdf = gdf.to_crs(epsg=3857)
 
-    # 4. Centroids for proportional symbols
+    # 4. Proportional-symbol points at each polygon's TRUE centroid
     gdf_points = gdf.copy()
-    # gdf_points["geometry"] = gdf_points.geometry.centroid
+    gdf_points["geometry"] = gdf_points.geometry.centroid
 
     # 5. Strong symbol scaling + minimum size
     gdf_points["size"] = np.maximum(np.sqrt(gdf_points["visits"]) / 4, 25)
@@ -63,7 +100,7 @@ def plot_greenspace_visits_osm(
         f"Medium ~ {((q_round[2]+q_round[3])//2)//1000}k",
         f"High ~ {((q_round[3]+q_round[4])//2)//1000}k",
         f"Very High ~ {((q_round[4]+q_round[5])//2)//1000}k",
-        f"Extreme > {q_round[4]//1000}k",
+        f"Extreme > {q_round[5]//1000}k",
     ]
 
     # 7. Top 5 greenspaces
@@ -72,7 +109,9 @@ def plot_greenspace_visits_osm(
     # 8. Plot
     fig, ax = plt.subplots(figsize=(12, 12))
 
-    # Bounds
+    # Bounds - from the polygon layer, now the complete, correctly
+    # geo-referenced dataset (previously referenced an undefined `gdf`
+    # left over from before this function took a separate polygons input)
     xmin, ymin, xmax, ymax = gdf.total_bounds
     pad_x = (xmax - xmin) * 0.05
     pad_y = (ymax - ymin) * 0.05
@@ -80,10 +119,17 @@ def plot_greenspace_visits_osm(
     ax.set_ylim(ymin - pad_y, ymax + pad_y)
 
     # Basemap
+    # Esri's World Gray Canvas: free, no API key/account required, and a
+    # light neutral style close to CartoDB Positron's look (which now
+    # requires a registered API key for programmatic use - see CHANGELOG).
+    # zoom is set explicitly rather than left to auto-calculate: the extent
+    # is now ~40km across several towns, and auto-zoom was requesting far
+    # more tiles than needed for a readable map at this scale, which is
+    # part of what triggered rate-limiting.
     ctx.add_basemap(
         ax,
-        source=ctx.providers.CartoDB.Positron,
-        zoom=13,
+        source=ctx.providers.Esri.WorldGrayCanvas,
+        zoom=11,
         alpha=0.8,
     )
 
@@ -102,7 +148,7 @@ def plot_greenspace_visits_osm(
         subset = gdf_points[gdf_points["visit_bin"] == label]
         subset.plot(
             ax=ax,
-            # markersize=subset["size"],
+            markersize=subset["size"],
             color=colour,
             alpha=0.85,
             edgecolor="white",
