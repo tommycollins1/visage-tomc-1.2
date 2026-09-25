@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented here.
 
+## [1.2.0-dev] — 2026-08-26
+### Fixed
+- `src/visualisation/baseline_maps.py`: basemap fetches were failing with a
+  `403 Access blocked` (OpenStreetMap's Mapnik tile server) and then an
+  "API KEY REQUIRED" watermark (CartoDB.Positron, which now requires a
+  registered account/API key for programmatic use, unlike its older free
+  anonymous tier). Root cause: the origins/destinations extent is now
+  ~40km across several towns since the edge-effect buffer work, so
+  contextily's auto-zoom was requesting far more tiles than needed, on top
+  of no local caching across repeated dev runs - together this tripped
+  rate-limiting/blocking on both providers.
+- Switched to `Esri.WorldGrayCanvas` (free, no API key required, visually
+  close to Positron), set an explicit `zoom=11` appropriate for the wider
+  extent instead of leaving it to auto-calculate, and added a local tile
+  cache (`paths_cfg.TILE_CACHE`, gitignored) so repeated runs reuse
+  previously-downloaded tiles instead of re-fetching them.
+
+### Changed
+- `src/model/spatial_interaction.py` (`model_2`): destinations are
+  access-point-level (multiple access points per `site_id`), but the model
+  was treating every access point as an independent competing destination -
+  a site with more entrances was effectively pulling more visits purely
+  because it had more rows, not because it was bigger, better, or closer.
+  A site's distance from an origin is now reduced to the distance to its
+  *nearest* access point (`groupby(["origin_id", "site_id"])["distance"].min()`)
+  before weighting/allocation, so results are now genuinely site-level.
+  Output changed from `origin_id, access_pt_id, visits` to
+  `origin_id, site_id, visits` accordingly.
+- `src/visualisation/baseline_maps.py` (`plot_greenspace_visits_osm`): the
+  model fix above meant `model_df` now has one row per site, but it was
+  still being merged onto the un-deduplicated access-point-level
+  `destinations_gdf`, which silently re-duplicated each site's (now
+  correct) total visits back across every one of its access points -
+  visible as overlapping/repeated labels on sites with multiple entrances.
+  Added `destinations_gdf.drop_duplicates(subset=id_col, keep="first")`
+  before the merge so each site plots as exactly one point. `keep="first"`
+  is a placeholder location (one of the site's access points, arbitrary
+  but deterministic) - swap for a proper site polygon centroid once that
+  geometry decision is made (see notes on `ARCHIVED_SITE_CATALOGUE_POLYGONS`).
+- `examples/run_baseline.py`: updated to call `plot_greenspace_visits_osm`
+  with `id_col="site_id"` to match; removed the temporary
+  `dataset == 'sssi'` filter used for testing.
+
 ## [1.2.0-dev] — 2026-08-12
 ### Changed
 - Renamed `main_cfg.py` to `paths_cfg.py` (paths only) and added `params_cfg.py`
