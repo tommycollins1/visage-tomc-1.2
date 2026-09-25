@@ -1,12 +1,19 @@
-# Restricted / licensed data - do not commit (Strava data redistribution is
-# restricted by Strava's terms; purged from history 2026-08-12, see CHANGELOG)
+# Restricted / licensed data / too big - do not commit
+#  - Strava data redistribution is restricted by Strava's terms; purged from
+#    history 2026-08-12, see CHANGELOG)
+#  - Cuebiq data redistribution is restricted by Cuebiq's terms
+#  - all_greenspace_union and ox_greenspace_union  will be too big
+
 data/external/agg_strava_oxford_greenspace_timeseries.parquet
 **/agg_strava_oxford_greenspace_timeseries.parquet
 
-# Restricted / licensed data - do not commit (Cuebiq data redistribution is
-# restricted by Cuebiq's terms)
 /data/external/cbq_oxford_greenspace_q1_2025_dayonly_cleaned.gpkg
 **/cbq_oxford_greenspace_q1_2025_dayonly_cleaned.gpkg
+
+/data/all_greenspace_union.gpkg
+
+/data/ox_greenspace_union.gpkg
+
 
 # contextily basemap tile cache - locally cached downloads, not source data
 .tile_cache/
