@@ -42,7 +42,7 @@ DATA_BOUNDARIES: Final[Path] = DATA / "boundaries"
 # ACTIVE MODEL INPUTS (current, in-use dataset)
 # =============================================================================
 
-SYNTHETIC_ORIGINS: Final[Path] = DATA / "ox_synthetic_pop_origin.csv"
+SYNTHETIC_ORIGINS: Final[Path] = DATA / "all_synthetic_pop_origin.csv"
 
 # Access-point-level union of AGI/SSSI/SAC greenspace sites: one row per
 # access point (2,926), has_agi/has_sac/has_sssi boolean columns for
@@ -51,10 +51,45 @@ SYNTHETIC_ORIGINS: Final[Path] = DATA / "ox_synthetic_pop_origin.csv"
 # per site_id (458 sites) by design - see CHANGELOG for the plan to
 # reduce this to one distance-per-site via nearest-access-point selection
 # at distance-matrix build time, not by deleting rows here.
-GREENSPACE_DESTINATIONS: Final[Path] = DATA / "site_cat_access_union.csv"
+GREENSPACE_DESTINATIONS: Final[Path] = DATA / "all_site_cat_access_union.csv"
 
-GREENSPACE_POLYGONS_OX: Final[Path] = DATA / 'ox_greenspace_union.gpkg'
-GREENSPACE_POLYGONS_ALL: Final[Path] = DATA / 'all_greenspace_union.gpkg'
+# GREENSPACE_POLYGONS: Final[Path] = DATA / 'ox_greenspace_union.gpkg'
+GREENSPACE_POLYGONS: Final[Path] = DATA / 'all_greenspace_union.gpkg'
+
+MODE = 'drive'
+
+GET_NETWORK_ENGLAND_OSRM: Final[Path] = (
+    DATA / "get_network_england_osrm" / MODE
+)
+
+DISTANCES_FINAL: Final[Path] = (GET_NETWORK_ENGLAND_OSRM /
+                                "distances_final.parquet")
+
+DISTANCES_PER_SITE: Final[Path] = (GET_NETWORK_ENGLAND_OSRM /
+                                   "distances_per_site.parquet")
+
+# Explicit per-mode paths, so a script can request walk or drive network
+# distances directly (model_2's distance_method="network" takes a path,
+# not just the MODE default above). Checked Sept 2026:
+#   - walk: 20-min cap -> max ~2.16km. Under-covers LAMBDA_PANS's ~7,740m
+#     decay length and the PaNS survey's own bins (up to 19,312m) - only
+#     use for a deliberately local/walking-catchment analysis, not as the
+#     general-purpose network distance.
+#   - drive: 20-min cap -> max ~27.9km, full coverage of all 296 origins
+#     and all 2,930 access points for the Oxford subset. Comfortably spans
+#     LAMBDA_PANS's range - this is the sensible default for "network".
+# Neither is strictly "correct" on its own: LAMBDA_PANS is fit across all
+# four PaNS bins (0.5mi-12mi), which is itself a mixed-mode range, so the
+# model is implicitly mode-agnostic. Drive covers the full range needed;
+# walk is kept available for local-catchment work, not yet wired as the
+# default anywhere. Don't trust the `site_id` column in either file - it's
+# from a different vintage of the greenspace union (near-zero overlap with
+# the current site_cat_access_union.csv site_id values); always rejoin via
+# `access_pt_id`/`dest_id` instead.
+DISTANCES_FINAL_WALK: Final[Path] = DATA / "get_network_england_osrm" / "walk" / "distances_final.parquet"
+DISTANCES_FINAL_DRIVE: Final[Path] = DATA / "get_network_england_osrm" / "drive" / "distances_final.parquet"
+
+
 
 # =============================================================================
 # ARCHIVED (superseded v1.1-format) INPUTS
