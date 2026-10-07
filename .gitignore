@@ -11,8 +11,9 @@ data/external/agg_strava_oxford_greenspace_timeseries.parquet
 **/cbq_oxford_greenspace_q1_2025_dayonly_cleaned.gpkg
 
 /data/all_greenspace_union.gpkg
-
 /data/ox_greenspace_union.gpkg
+/data/all_synthetic_pop_origin.csv
+/data/all_site_cat_access_union.csv
 
 
 # contextily basemap tile cache - locally cached downloads, not source data
