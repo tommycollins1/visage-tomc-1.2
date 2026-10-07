@@ -11,6 +11,8 @@ This module implements:
 import numpy as np
 import pandas as pd
 
+from src.behaviour.distance_decay import VISITS_PER_PERSON_PER_YEAR
+
 
 # ---------------------------------------------------------
 # 1. Placeholder OSM Feature Extractor (V1.2 Skeleton)
@@ -103,8 +105,13 @@ def run_quality_sensitive_gravity(origins_df,
     w_norm = w / w.sum(axis=1, keepdims=True)
 
     # 5. Visits per origin
+    # NOTE (Sept 2026 fix): this previously used raw population with no
+    # visits-per-person multiplier, putting visits_quality on a ~100x
+    # different scale to visits_baseline (which does apply this multiplier
+    # via run_gravity_with_pans_lambda / run_gravity_with_lambda). See
+    # ISSUES.md #3b.
     origin_visits = (
-        origins_df["population"].values.reshape(-1, 1)
+        origins_df["population"].values.reshape(-1, 1) * VISITS_PER_PERSON_PER_YEAR
     )
 
     # 6. Allocate visits
