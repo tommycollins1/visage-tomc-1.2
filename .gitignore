@@ -15,6 +15,11 @@ data/external/agg_strava_oxford_greenspace_timeseries.parquet
 /data/all_synthetic_pop_origin.csv
 /data/all_site_cat_access_union.csv
 
+/data/get_network_england_osrm/drive/distances_final.parquet
+/data/get_network_england_osrm/drive/distances_per_site.parquet
+/data/get_network_england_osrm/walk/distances_final.parquet
+/data/get_network_england_osrm/walk/distances_per_site.parquet
+
 
 # contextily basemap tile cache - locally cached downloads, not source data
 .tile_cache/
@@ -226,3 +231,4 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
