@@ -3,7 +3,8 @@ import geopandas as gpd
 from paths_cfg import (
     SYNTHETIC_ORIGINS,
     GREENSPACE_DESTINATIONS,
-    GREENSPACE_POLYGONS_OX
+    GREENSPACE_POLYGONS,
+    DISTANCES_FINAL_DRIVE
 )
 from params_cfg import (
     VISITS_PER_PERSON_PER_YEAR,
@@ -14,11 +15,11 @@ from src.data.load_destinations import load_destinations
 from src.model.spatial_interaction import model_2
 from src.visualisation.baseline_maps import plot_greenspace_visits_osm
 
-
+dfhn
 def main():
     origins_gdf = load_origins(path=SYNTHETIC_ORIGINS)
     destinations_gdf = load_destinations(path=GREENSPACE_DESTINATIONS)
-    polygons = (gpd.read_file(GREENSPACE_POLYGONS_OX)
+    polygons = (gpd.read_file(GREENSPACE_POLYGONS)
                 .rename(columns={'polygon_id': "site_id"}))
 
     m2 = model_2(
@@ -26,6 +27,8 @@ def main():
         destinations_df=destinations_gdf.drop(columns="geometry"),
         visits_per_person=VISITS_PER_PERSON_PER_YEAR,
         lambda_value=LAMBDA_PANS,
+        distance_method='network',
+        network_distances_path=DISTANCES_FINAL_DRIVE,
     )
 
     plot_greenspace_visits_osm(
