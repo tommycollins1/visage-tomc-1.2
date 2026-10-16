@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 
@@ -9,7 +11,8 @@ def model_2(origins_df: pd.DataFrame,
             visits_per_person: float,
             lambda_value: float,
             distance_method: str = "euclidean",
-            network_distances_path=None) -> pd.DataFrame:
+            network_distances_path=None,
+            max_origin_snap_m: float | None = None) -> pd.DataFrame:
     """
     Baseline distance-only spatial interaction model (M2).
 
@@ -44,6 +47,10 @@ def model_2(origins_df: pd.DataFrame,
         fallback to Euclidean for those pairs.
     network_distances_path : path-like, required if distance_method="network"
         Path to a distances_final.parquet file.
+    max_origin_snap_m : float, optional
+        Network mode only: drop origins OSRM snapped further than this many
+        metres onto the road network (see load_network_distances). Dropped
+        origins produce no rows, so their demand is NOT allocated.
 
     Returns
     -------
@@ -77,6 +84,7 @@ def model_2(origins_df: pd.DataFrame,
             distances_path=network_distances_path,
             destinations_df=destinations,
             origin_ids=origins["origin_id"].unique(),
+            max_origin_snap_m=max_origin_snap_m,
         )
 
     else:
