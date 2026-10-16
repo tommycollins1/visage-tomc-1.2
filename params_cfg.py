@@ -41,6 +41,46 @@ from src.behaviour.distance_decay import (  # noqa: F401
 )
 
 # =============================================================================
+# BASELINE RUN SETTINGS (read by examples/run_baseline.py)
+# =============================================================================
+# Edit these here - run_baseline.py takes no command-line arguments.
+
+# Distance between origins and sites: "network" (OSRM road distance) or
+# "euclidean" (straight line). NETWORK_MODE picks the OSRM extract
+# ("drive" covers LAMBDA_PANS's range; "walk" caps at ~2.16km - see paths_cfg).
+DISTANCE_METHOD: Final[str] = "network"
+NETWORK_MODE: Final[str] = "drive"
+
+# Keep origins whose id starts with this ("E" = England only; the origins file
+# also holds Welsh "W01..." LSOAs that fall outside the England-only network).
+# None keeps all origins.
+COUNTRY_PREFIX: Final[str | None] = "E"
+
+# Network only: drop origins OSRM had to snap further than this (metres) onto
+# the road network. English origins are essentially all < 550m. None disables.
+MAX_ORIGIN_SNAP_M: Final[float | None] = 1000
+
+# Origins per model_2 call (exact - origins are normalised independently).
+CHUNK_SIZE: Final[int] = 2000
+
+# Outputs: the site table is always written; these are extras.
+SAVE_OD: Final[bool] = False   # origin x site visits as parquet (large)
+PLOT: Final[bool] = True      # map; needs polygons whose polygon_id matches site_id
+
+# ---- Optional study-area clipping (None = full England run) -----------------
+# Key into paths_cfg.CLIP_BOUNDARIES, e.g. "oxford". See src/data/clip_region.py
+# for why origins are clipped but destinations are (by default) not.
+CLIP_AREA: Final[str | None] = 'oxford'
+# "demand": residents of the area -> anywhere (exact subset of the national run)
+# "supply": visits to sites in the area, from origins in area + buffer
+CLIP_VIEW: Final[str] = "demand"
+# Buffer added to the area when selecting origins. None -> 0 (demand) / 28000 (supply)
+CLIP_BUFFER_M: Final[float | None] = None
+# Closed-system variant: ALSO restrict destinations (approximate; inflates rim sites)
+CLIP_DESTINATIONS: Final[bool] = False
+DEST_BUFFER_M: Final[float] = 16093   # with CLIP_DESTINATIONS: 10 miles
+
+# =============================================================================
 # QUALITY-SENSITIVE MODEL
 # =============================================================================
 
