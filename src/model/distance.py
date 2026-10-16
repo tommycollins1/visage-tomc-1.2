@@ -69,6 +69,7 @@ def load_network_distances(
     dest_id_col: str = "dest_id",
     access_pt_col: str = "access_pt_id",
     site_id_col: str = "site_id",
+    max_origin_snap_m: float | None = None,
 ) -> pd.DataFrame:
     """
     Load pre-computed OSRM network distances (walk or drive - see
@@ -97,6 +98,12 @@ def load_network_distances(
         Restrict the read to these origin_ids via predicate pushdown
         (Parquet filter, not a post-hoc pandas filter) - the drive file is
         ~70M rows / ~900MB, so this matters for memory, not just speed.
+    max_origin_snap_m : float, optional
+        Drop origins OSRM had to snap further than this (metres) onto the
+        road network. Such origins sit outside the network extract (e.g.
+        Welsh LSOAs in an England-only extract snapped ~20km), so their
+        distances are badly understated. English origins are essentially
+        all < 550m; ~1000 is a sensible cut-off. None keeps everything.
 
     Returns
     -------
@@ -108,6 +115,9 @@ def load_network_distances(
     filt = None
     if origin_ids is not None:
         filt = pa_ds.field("origin_id").isin(list(origin_ids))
+    if max_origin_snap_m is not None:
+        snap_ok = pa_ds.field("origin_snap_m") <= max_origin_snap_m
+        filt = snap_ok if filt is None else (filt & snap_ok)
 
     dataset = pa_ds.dataset(str(distances_path), format="parquet")
     table = dataset.to_table(
