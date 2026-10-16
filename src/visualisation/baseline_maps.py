@@ -148,7 +148,7 @@ def plot_greenspace_visits_osm(
         subset = gdf_points[gdf_points["visit_bin"] == label]
         subset.plot(
             ax=ax,
-            markersize=subset["size"],
+            # markersize=subset["size"],
             color=colour,
             alpha=0.85,
             edgecolor="white",
