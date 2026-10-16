@@ -89,7 +89,28 @@ DISTANCES_PER_SITE: Final[Path] = (GET_NETWORK_ENGLAND_OSRM /
 DISTANCES_FINAL_WALK: Final[Path] = DATA / "get_network_england_osrm" / "walk" / "distances_final.parquet"
 DISTANCES_FINAL_DRIVE: Final[Path] = DATA / "get_network_england_osrm" / "drive" / "distances_final.parquet"
 
+# params_cfg.NETWORK_MODE -> OSRM file
+DISTANCES_FINAL_BY_MODE: Final[dict] = {
+    "drive": DISTANCES_FINAL_DRIVE,
+    "walk": DISTANCES_FINAL_WALK,
+}
 
+# params_cfg.CLIP_AREA -> boundary file for optional study-area clipping
+CLIP_BOUNDARIES: Final[dict] = {
+    "oxford": DATA / "boundaries" / "oxford_lad_buffer_10mi.gpkg",  # already a 10-mile buffer
+}
+
+# =============================================================================
+# MODEL OUTPUTS (written by examples/run_baseline.py)
+# =============================================================================
+
+OUTPUTS: Final[Path] = ROOT / "outputs"
+
+# Canonical result: one row per site (site_id, visits + run metadata).
+BASELINE_SITE_VISITS: Final[Path] = OUTPUTS / "baseline_site_visits.csv"
+
+# Optional origin -> site visits (long-form, large: parquet only).
+BASELINE_OD_VISITS: Final[Path] = OUTPUTS / "baseline_od_visits.parquet"
 
 # =============================================================================
 # ARCHIVED (superseded v1.1-format) INPUTS
