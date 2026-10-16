@@ -18,8 +18,8 @@ data/external/agg_strava_oxford_greenspace_timeseries.parquet
 /data/get_network_england_osrm/drive/*.parquet
 /data/get_network_england_osrm/walk/*.parquet
 
-/outputs/baseline_site_visits.csv                                 # <- not in changes
-/outputs/baseline_site_visits_oxford_supply.csv                   # <- not in changes
+/outputs/baseline_site_visits.csv
+/outputs/baseline_site_visits_oxford_supply.csv
 
 
 
